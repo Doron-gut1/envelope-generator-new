@@ -1,5 +1,5 @@
 using Dapper;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using EnvelopeGenerator.Core.Interfaces;
 using EnvelopeGenerator.Core.Models;
 using System.Text;
@@ -15,12 +15,14 @@ public class EnvelopeRepository : IEnvelopeRepository
 
     public EnvelopeRepository(SqlConnectionProvider connectionProvider)
     {
-        _connectionProvider = connectionProvider;
+        _connectionProvider = connectionProvider ?? throw new ArgumentNullException(nameof(connectionProvider));
     }
 
     /// <inheritdoc />
     public async Task<IEnumerable<VoucherData>> GetVoucherDataAsync(EnvelopeParams parameters)
     {
+        ArgumentNullException.ThrowIfNull(parameters);
+
         // Get envelope structure for building the query
         var structure = await GetEnvelopeStructureAsync(parameters.EnvelopeType);
         var sql = BuildSqlQuery(structure.Fields);
@@ -55,22 +57,25 @@ public class EnvelopeRepository : IEnvelopeRepository
             // Add dynamic fields based on structure definition
             foreach (var field in structure.Fields)
             {
-                if (!field.Name.Contains("simanenu") && !field.Name.Contains("rek"))
+                if (!field.InName.Contains("simanenu", StringComparison.OrdinalIgnoreCase) && 
+                    !field.InName.Contains("rek", StringComparison.OrdinalIgnoreCase))
                 {
-                    var value = ((IDictionary<string, object>)row)[field.Name];
+                    var value = ((IDictionary<string, object>)row)[field.InName];
                     if (value != null)
                     {
-                        voucherData.SetField(field.Name, value);
+                        voucherData.SetField(field.InName, value);
                     }
                 }
             }
 
             return voucherData;
-        });
+        }).ToList();
     }
 
     private string BuildSqlQuery(IEnumerable<FieldDefinition> fields)
     {
+        ArgumentNullException.ThrowIfNull(fields);
+
         var queryBuilder = new StringBuilder();
         queryBuilder.AppendLine("SELECT");
         queryBuilder.AppendLine("    sh.mspkod,");
@@ -83,7 +88,8 @@ public class EnvelopeRepository : IEnvelopeRepository
 
         foreach (var field in fields)
         {
-            if (!field.Name.Contains("simanenu") && !field.Name.Contains("rek"))
+            if (!field.InName.Contains("simanenu", StringComparison.OrdinalIgnoreCase) && 
+                !field.InName.Contains("rek", StringComparison.OrdinalIgnoreCase))
             {
                 var tablePrefix = field.Source switch
                 {
@@ -95,7 +101,7 @@ public class EnvelopeRepository : IEnvelopeRepository
                     _ => throw new ArgumentException($"Unknown data source: {field.Source}")
                 };
 
-                queryBuilder.AppendLine($"    ,{tablePrefix}{field.Name}");
+                queryBuilder.AppendLine($"    ,{tablePrefix}{field.InName}");
             }
         }
 
@@ -127,17 +133,20 @@ public class EnvelopeRepository : IEnvelopeRepository
             new { EnvelopeType = envelopeType },
             commandType: System.Data.CommandType.StoredProcedure);
 
-        var fields = await multi.ReadAsync<FieldDefinition>();
+        var fields = (await multi.ReadAsync<FieldDefinition>()).ToList();
         var parameters = await multi.ReadFirstAsync<EnvelopeStructure>();
+
+        if (parameters == null)
+            throw new InvalidOperationException($"No envelope structure found for type {envelopeType}");
 
         return new EnvelopeStructure
         {
-            Fields = fields.ToList(),
+            Fields = fields,
             NumOfDigits = parameters.NumOfDigits,
             PositionOfShnati = parameters.PositionOfShnati,
             DosHebrewEncoding = parameters.DosHebrewEncoding,
             NumOfPerutLines = parameters.NumOfPerutLines,
-            NumOfPerutFields = fields.Count(f => f.Name.StartsWith("sm"))
+            NumOfPerutFields = fields.Count(f => f.InName.StartsWith("sm", StringComparison.OrdinalIgnoreCase))
         };
     }
 
@@ -145,8 +154,10 @@ public class EnvelopeRepository : IEnvelopeRepository
     public async Task<SystemParameters> GetSystemParametersAsync()
     {
         using var connection = new SqlConnection(_connectionProvider.ConnectionString);
-        return await connection.QueryFirstAsync<SystemParameters>(
+        var parameters = await connection.QueryFirstOrDefaultAsync<SystemParameters>(
             "GetSystemParams",
             commandType: System.Data.CommandType.StoredProcedure);
+
+        return parameters ?? throw new InvalidOperationException("Failed to retrieve system parameters");
     }
 }
