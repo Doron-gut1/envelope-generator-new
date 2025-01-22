@@ -10,17 +10,17 @@ namespace EnvelopeGenerator.Core.Services;
 /// </summary>
 public class EnvelopeRepository : IEnvelopeRepository
 {
-    private readonly string _connectionString;
+    private readonly SqlConnectionProvider _connectionProvider;
 
     public EnvelopeRepository(SqlConnectionProvider connectionProvider)
     {
-        _connectionString = connectionProvider.ConnectionString;
+        _connectionProvider = connectionProvider;
     }
 
     /// <inheritdoc />
     public async Task<IEnumerable<VoucherData>> GetVoucherDataAsync(EnvelopeParams parameters)
     {
-        using var connection = new SqlConnection(_connectionString);
+        using var connection = new SqlConnection(_connectionProvider.ConnectionString);
         var result = await connection.QueryAsync<VoucherData>(
             "GetVoucherData",
             new
@@ -61,7 +61,7 @@ public class EnvelopeRepository : IEnvelopeRepository
     /// <inheritdoc />
     public async Task<EnvelopeStructure> GetEnvelopeStructureAsync(int envelopeType)
     {
-        using var connection = new SqlConnection(_connectionString);
+        using var connection = new SqlConnection(_connectionProvider.ConnectionString);
         using var multi = await connection.QueryMultipleAsync(
             "GetEnvelopeStructure",
             new { EnvelopeType = envelopeType },
@@ -84,7 +84,7 @@ public class EnvelopeRepository : IEnvelopeRepository
     /// <inheritdoc />
     public async Task<SystemParameters> GetSystemParametersAsync()
     {
-        using var connection = new SqlConnection(_connectionString);
+        using var connection = new SqlConnection(_connectionProvider.ConnectionString);
         return await connection.QueryFirstAsync<SystemParameters>(
             "GetSystemParams",
             commandType: System.Data.CommandType.StoredProcedure);
