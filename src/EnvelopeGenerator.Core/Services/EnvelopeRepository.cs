@@ -1,7 +1,7 @@
 using Dapper;
+using System.Data.SqlClient;
 using EnvelopeGenerator.Core.Interfaces;
 using EnvelopeGenerator.Core.Models;
-using System.Data;
 
 namespace EnvelopeGenerator.Core.Services;
 
@@ -10,17 +10,18 @@ namespace EnvelopeGenerator.Core.Services;
 /// </summary>
 public class EnvelopeRepository : IEnvelopeRepository
 {
-    private readonly IDbConnection _connection;
+    private readonly string _connectionString;
 
-    public EnvelopeRepository(IDbConnection connection)
+    public EnvelopeRepository(SqlConnectionProvider connectionProvider)
     {
-        _connection = connection ?? throw new ArgumentNullException(nameof(connection));
+        _connectionString = connectionProvider.ConnectionString;
     }
 
     /// <inheritdoc />
     public async Task<IEnumerable<VoucherData>> GetVoucherDataAsync(EnvelopeParams parameters)
     {
-        var result = await _connection.QueryAsync<VoucherData>(
+        using var connection = new SqlConnection(_connectionString);
+        var result = await connection.QueryAsync<VoucherData>(
             "GetVoucherData",
             new
             {
@@ -31,7 +32,7 @@ public class EnvelopeRepository : IEnvelopeRepository
                 parameters.ClosureNumber,
                 parameters.VoucherGroup
             },
-            commandType: CommandType.StoredProcedure);
+            commandType: System.Data.CommandType.StoredProcedure);
 
         return result.Select(row =>
         {
@@ -60,19 +61,13 @@ public class EnvelopeRepository : IEnvelopeRepository
     /// <inheritdoc />
     public async Task<EnvelopeStructure> GetEnvelopeStructureAsync(int envelopeType)
     {
-        // Get structure fields
-        var fields = await _connection.QueryAsync<FieldDefinition>(
+        using var connection = new SqlConnection(_connectionString);
+        using var multi = await connection.QueryMultipleAsync(
             "GetEnvelopeStructure",
             new { EnvelopeType = envelopeType },
-            commandType: CommandType.StoredProcedure);
+            commandType: System.Data.CommandType.StoredProcedure);
 
-        // Get header parameters (from second result set)
-        using var multi = await _connection.QueryMultipleAsync(
-            "GetEnvelopeStructure",
-            new { EnvelopeType = envelopeType },
-            commandType: CommandType.StoredProcedure);
-
-        await multi.ReadAsync<FieldDefinition>(); // Skip first result set
+        var fields = await multi.ReadAsync<FieldDefinition>();
         var parameters = await multi.ReadFirstAsync<EnvelopeStructure>();
 
         return new EnvelopeStructure
@@ -89,8 +84,9 @@ public class EnvelopeRepository : IEnvelopeRepository
     /// <inheritdoc />
     public async Task<SystemParameters> GetSystemParametersAsync()
     {
-        return await _connection.QueryFirstAsync<SystemParameters>(
+        using var connection = new SqlConnection(_connectionString);
+        return await connection.QueryFirstAsync<SystemParameters>(
             "GetSystemParams",
-            commandType: CommandType.StoredProcedure);
+            commandType: System.Data.CommandType.StoredProcedure);
     }
 }
