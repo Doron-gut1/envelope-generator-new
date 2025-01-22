@@ -1,6 +1,7 @@
 using EnvelopeGenerator.Core.Interfaces;
 using EnvelopeGenerator.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
+using System.Data;
 
 namespace EnvelopeGenerator.Core.Services;
 
@@ -19,12 +20,12 @@ public class EnvelopeManager
     public EnvelopeManager(
         string odbcName, 
         int actionType, 
-        int sugmtf, 
-        int mnt,
+        int envelopeType, 
+        int batchNumber,
         bool isYearly = false,
-        long? mspkod = null,
-        int? sgrnum = null,
-        long? kvuzashovar = null)
+        long? familyCode = null,
+        int? closureNumber = null,
+        long? voucherGroup = null)
     {
         _odbcName = odbcName;
         
@@ -40,12 +41,12 @@ public class EnvelopeManager
         _params = new EnvelopeParams
         {
             ActionType = actionType,
-            EnvelopeType = sugmtf,
-            BatchNumber = mnt,
+            EnvelopeType = envelopeType,
+            BatchNumber = batchNumber,
             IsYearly = isYearly,
-            FamilyCode = mspkod,
-            ClosureNumber = sgrnum,
-            VoucherGroup = kvuzashovar
+            FamilyCode = familyCode,
+            ClosureNumber = closureNumber,
+            VoucherGroup = voucherGroup
         };
     }
 
@@ -68,6 +69,14 @@ public class EnvelopeManager
 
     private void ConfigureServices(IServiceCollection services)
     {
+        // Register connection with explicit IDbConnection creation
+        services.AddScoped<IDbConnection>(sp =>
+        {
+            var factory = sp.GetRequiredService<IConnectionFactory>();
+            return factory.CreateConnection(_odbcName);
+        });
+
+        // Register all other services
         services.AddTransient<IEnvelopeGenerator, EnvelopeGenerator>();
         services.AddTransient<IFileGenerator, FileGenerator>();
         services.AddTransient<IEncodingService, HebrewEncodingService>();
