@@ -1,7 +1,6 @@
 using EnvelopeGenerator.Core.Interfaces;
 using EnvelopeGenerator.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
-using System.Data;
 
 namespace EnvelopeGenerator.Core.Services;
 
@@ -10,7 +9,6 @@ namespace EnvelopeGenerator.Core.Services;
 /// </summary>
 public class EnvelopeManager
 {
-    private readonly string _odbcName;
     private readonly IEnvelopeGenerator _generator;
     private readonly EnvelopeParams _params;
 
@@ -27,11 +25,9 @@ public class EnvelopeManager
         int? closureNumber = null,
         long? voucherGroup = null)
     {
-        _odbcName = odbcName;
-        
         // Configure DI
         var services = new ServiceCollection();
-        ConfigureServices(services);
+        ConfigureServices(services, odbcName);
         var serviceProvider = services.BuildServiceProvider();
         
         // Get generator
@@ -58,7 +54,7 @@ public class EnvelopeManager
     {
         try
         {
-            bool success = await _generator.GenerateEnvelopes(_odbcName, _params);
+            bool success = await _generator.GenerateEnvelopes(string.Empty, _params);
             return (success, success ? "" : "Failed to generate envelopes");
         }
         catch (Exception ex)
@@ -67,20 +63,15 @@ public class EnvelopeManager
         }
     }
 
-    private void ConfigureServices(IServiceCollection services)
+    private void ConfigureServices(IServiceCollection services, string odbcName)
     {
-        // Register connection with explicit IDbConnection creation
-        services.AddScoped<IDbConnection>(sp =>
-        {
-            var factory = sp.GetRequiredService<IConnectionFactory>();
-            return factory.CreateConnection(_odbcName);
-        });
+        // Register SQL connection provider
+        services.AddSingleton(new SqlConnectionProvider(odbcName));
 
         // Register all other services
         services.AddTransient<IEnvelopeGenerator, EnvelopeGenerator>();
         services.AddTransient<IFileGenerator, FileGenerator>();
         services.AddTransient<IEncodingService, HebrewEncodingService>();
-        services.AddTransient<IConnectionFactory, OdbcConnectionFactory>();
         services.AddTransient<IEnvelopeRepository, EnvelopeRepository>();
     }
 }
