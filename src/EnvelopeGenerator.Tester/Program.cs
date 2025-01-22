@@ -2,6 +2,7 @@ using EnvelopeGenerator.Core.Interfaces;
 using EnvelopeGenerator.Core.Models;
 using EnvelopeGenerator.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
+using System.Data;
 
 namespace EnvelopeGenerator.Tester;
 
@@ -65,9 +66,12 @@ class Program
         services.AddTransient<IEnvelopeGenerator, Core.Services.EnvelopeGenerator>();
         services.AddTransient<IFileGenerator, FileGenerator>();
         services.AddTransient<IEncodingService, HebrewEncodingService>();
-        // Add your ODBC connection factory here
-        services.AddTransient<IConnectionFactory>(sp => 
-            new YourOdbcConnectionFactory()); // You'll need to implement this
+        services.AddTransient<IConnectionFactory, OdbcConnectionFactory>();
+        services.AddScoped<IDbConnection>(sp => 
+        {
+            // הקישור לDB יתבצע כשהטסטר יקבל את שם ה-ODBC מהמשתמש
+            return null!;
+        });
         services.AddTransient<IEnvelopeRepository, EnvelopeRepository>();
     }
 
