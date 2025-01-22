@@ -11,12 +11,12 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
-    <PackageReference Include="System.Data.Odbc" Version="6.0.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.5" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="OdbcConverter">
-      <HintPath>..\..\..\..\gloabl projects\HpPnimFileLoader\External libraries\OdbcConverter.dll</HintPath>
+      <HintPath>..\lib\OdbcConverter.dll</HintPath>
     </Reference>
   </ItemGroup>
 
