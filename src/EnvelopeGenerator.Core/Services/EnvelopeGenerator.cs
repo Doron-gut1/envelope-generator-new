@@ -10,16 +10,13 @@ public class EnvelopeGenerator : IEnvelopeGenerator
 {
     private const int BATCH_SIZE = 1000;
     
-    private readonly IConnectionFactory _connectionFactory;
     private readonly IEnvelopeRepository _repository;
     private readonly IFileGenerator _fileGenerator;
 
     public EnvelopeGenerator(
-        IConnectionFactory connectionFactory,
         IEnvelopeRepository repository,
         IFileGenerator fileGenerator)
     {
-        _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _fileGenerator = fileGenerator ?? throw new ArgumentNullException(nameof(fileGenerator));
     }
@@ -29,7 +26,6 @@ public class EnvelopeGenerator : IEnvelopeGenerator
     {
         try
         {
-            using var connection = _connectionFactory.CreateConnection(odbcName);
             
             // Get envelope structure
             var structure = await _repository.GetEnvelopeStructureAsync(parameters.EnvelopeType);
