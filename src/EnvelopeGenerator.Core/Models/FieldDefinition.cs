@@ -1,39 +1,51 @@
+using System.Text.Json.Serialization;
+
 namespace EnvelopeGenerator.Core.Models;
 
 /// <summary>
 /// Field definition from mivnemtf table
 /// </summary>
-public class FieldDefinition
+public record FieldDefinition
 {
     /// <summary>
     /// Field name
     /// </summary>
-    public string Name { get; set; } = string.Empty;
+    [JsonPropertyName("inname")]
+    public string InName { get; init; } = string.Empty;
 
     /// <summary>
     /// Field data type
     /// </summary>
-    public FieldType Type { get; set; }
+    [JsonPropertyName("fldtype")]
+    public FieldType Type { get; init; }
 
     /// <summary>
     /// Field length in characters
     /// </summary>
-    public int Length { get; set; }
+    [JsonPropertyName("length")]
+    public int Length { get; init; }
 
     /// <summary>
     /// Field order in the row
     /// </summary>
-    public int Order { get; set; }
+    [JsonPropertyName("realseder")]
+    public int Order { get; init; }
 
     /// <summary>
     /// Source table for the field
     /// </summary>
-    public DataSource Source { get; set; }
+    [JsonPropertyName("recordset")]
+    public DataSource Source { get; init; }
+}
 
-    /// <summary>
-    /// Whether this is an active field (not rek/simanenu)
-    /// </summary>
-    public bool IsActive { get; set; }
+/// <summary>
+/// Field data types
+/// </summary>
+public enum FieldType
+{
+    Text = 1,
+    Numeric = 2,
+    Currency = 3
 }
 
 /// <summary>
@@ -41,9 +53,10 @@ public class FieldDefinition
 /// </summary>
 public enum DataSource
 {
+    None = 0,
     ShovarHead = 1,
     ShovarLines = 2,
-    None = 4,
+    Dynamic = 4,
     ShovarHeadDynamic = 5,
     ShovarHeadNx = 6
 }
