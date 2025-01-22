@@ -41,7 +41,31 @@ public class VoucherData
     public bool Shnati { get; set; }
 
     /// <summary>
-    /// Additional dynamic fields from the database
+    /// Dynamic fields storage
     /// </summary>
-    public Dictionary<string, object> DynamicFields { get; set; } = new();
+    private readonly Dictionary<string, object> _dynamicFields = new();
+
+    /// <summary>
+    /// Set dynamic field value
+    /// </summary>
+    public void SetField(string name, object value)
+    {
+        _dynamicFields[name] = value;
+    }
+
+    /// <summary>
+    /// Get dynamic field value
+    /// </summary>
+    public object GetField(string name)
+    {
+        return _dynamicFields.TryGetValue(name, out var value) ? value : null;
+    }
+
+    /// <summary>
+    /// Get all dynamic fields
+    /// </summary>
+    public IReadOnlyDictionary<string, object> GetAllFields()
+    {
+        return _dynamicFields;
+    }
 }
