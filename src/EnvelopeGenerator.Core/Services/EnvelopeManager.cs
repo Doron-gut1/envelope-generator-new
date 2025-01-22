@@ -19,12 +19,12 @@ public class EnvelopeManager
     public EnvelopeManager(
         string odbcName, 
         int actionType, 
-        int envelopeType, 
-        int batchNumber,
+        int sugmtf, 
+        int mnt,
         bool isYearly = false,
-        long? familyCode = null,
-        int? closureNumber = null,
-        long? voucherGroup = null)
+        long? mspkod = null,
+        int? sgrnum = null,
+        long? kvuzashovar = null)
     {
         _odbcName = odbcName;
         
@@ -40,12 +40,12 @@ public class EnvelopeManager
         _params = new EnvelopeParams
         {
             ActionType = actionType,
-            EnvelopeType = envelopeType,
-            BatchNumber = batchNumber,
+            EnvelopeType = sugmtf,
+            BatchNumber = mnt,
             IsYearly = isYearly,
-            FamilyCode = familyCode,
-            ClosureNumber = closureNumber,
-            VoucherGroup = voucherGroup
+            FamilyCode = mspkod,
+            ClosureNumber = sgrnum,
+            VoucherGroup = kvuzashovar
         };
     }
 
