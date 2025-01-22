@@ -14,4 +14,10 @@
     <PackageReference Include="System.Data.Odbc" Version="6.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="OdbcConverter">
+      <HintPath>..\..\..\..\gloabl projects\HpPnimFileLoader\External libraries\OdbcConverter.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

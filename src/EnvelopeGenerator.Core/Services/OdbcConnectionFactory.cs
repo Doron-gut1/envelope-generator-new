@@ -11,7 +11,8 @@ public class OdbcConnectionFactory : IConnectionFactory
 {
     public IDbConnection CreateConnection(string odbcName)
     {
-        var connectionString = $"DSN={odbcName};";
+        OdbcConverter.OdbcConverter odbcConvert = new OdbcConverter.OdbcConverter();
+        string connectionString = odbcConvert.GetSqlConnectionString(odbcName, "", "");
         return new OdbcConnection(connectionString);
     }
 }
